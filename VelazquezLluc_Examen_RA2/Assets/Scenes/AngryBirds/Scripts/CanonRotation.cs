@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-public class CanonRotation : MonoBehaviour
+public class CanonRotation : MonoBehaviour, InputSystem_Actions.IPlayerActions
 {
     public Vector3 _maxRotation;
     public Vector3 _minRotation;
@@ -16,17 +17,27 @@ public class CanonRotation : MonoBehaviour
     private float _initialScaleX;
     private Vector2 _distanceBetweenMouseAndPlayer;
     private bool isRaising = false;
+    private InputSystem_Actions inputActions;
     [SerializeField] private float _multiplier = 10f;
+    private Vector3 mousePos;
+    private float xvalue;
     private void Awake()
     {
+
+        inputActions = new InputSystem_Actions();
+        inputActions.Player.SetCallbacks(this);
         _initialScaleX = PotencyBar.transform.localScale.x;
+        inputActions.Enable();
+
     }
     void Update()
     {
-        Vector2 mousePos; //obtenir el valor del click del cursor (Fer amb new input system)
-        _distanceBetweenMouseAndPlayer = Vector2.zero; //obtenir el vector distància entre el canó i el cursor
-        //var ang = (Mathf.Atan2(dist.y, dist.x) * 180f / Mathf.PI + offset);
-        transform.rotation = Quaternion.Euler(0,0,0); //en quin dels tres eixos va l'angle?
+        //mousePos = Input.mousePosition; //obtenir el valor del click del cursor (Fer amb new input system)
+        _distanceBetweenMouseAndPlayer = mousePos - gameObject.transform.position; //obtenir el vector distància entre el canó i el cursor
+        
+        var ang = (Mathf.Atan2(_distanceBetweenMouseAndPlayer.y, _distanceBetweenMouseAndPlayer.x) * 180f / Mathf.PI + _offset);
+        //Debug.Log(ang);
+        transform.rotation = Quaternion.Euler(0, 0,ang); //en quin dels tres eixos va l'angle?
 
         if (isRaising)
         {
@@ -43,7 +54,7 @@ public class CanonRotation : MonoBehaviour
             transform.localScale.y,
             transform.localScale.z);
     }
-    /*public void OnLeftClick(InputAction.CallbackContext context)
+    public void OnLeftClick(InputAction.CallbackContext context)
     {
         if (context.started)
         {
@@ -51,10 +62,16 @@ public class CanonRotation : MonoBehaviour
         }
         if (context.canceled)
         {
-            var projectile = Instantiate(Bullet, transform.position, Quaternion.identity); //canviar la posició on s'instancia
-            projectile.GetComponent<Rigidbody2D>().linearVelocity =
-            ProjectileSpeed = 0f;
-            isRaising = false;
+            var projectile = Instantiate(Bullet,ShootPoint.transform.position, Quaternion.identity); //canviar la posició on s'instancia
+            projectile.GetComponent<Rigidbody2D>().linearVelocity = _distanceBetweenMouseAndPlayer;
+                ProjectileSpeed = 0f;
+                isRaising = false;
         }
-    }*/
+    }
+
+    public void OnLook(InputAction.CallbackContext context)
+    {
+        Vector2 positionMouse = Camera.main.ScreenToWorldPoint(context.ReadValue<Vector2>());
+        mousePos = positionMouse;
+    }
 }
